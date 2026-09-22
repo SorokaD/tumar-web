@@ -40,6 +40,8 @@ Copy `.env.example` and adjust values as needed.
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL used for SEO metadata |
 | `NEXT_PUBLIC_GITHUB_URL` | Public GitHub profile or repository |
 | `NEXT_PUBLIC_LINKEDIN_URL` | Optional LinkedIn profile. Leave empty to hide the footer link |
+| `NEXT_PUBLIC_SITE_AUTHOR` | Person name used in JSON-LD / metadata |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Optional Google Search Console HTML-tag token |
 | `NEXT_PUBLIC_API_BASE_URL` | Future realtime / research API. Not used by pages yet |
 | `NEXT_PUBLIC_SUPERSET_PUBLIC_URL` | Optional public/read-only Superset dashboard. Leave empty to hide the Live page button |
 
@@ -78,3 +80,9 @@ docker compose -f docker/docker-compose.web.yaml --env-file .env up -d --build
 ```
 
 `NEXT_PUBLIC_*` values are baked in at image build time. After changing them, rebuild the image.
+
+Public SEO files after deploy:
+
+- https://tumar.tech/robots.txt
+- https://tumar.tech/sitemap.xml
+- https://tumar.tech/manifest.webmanifest

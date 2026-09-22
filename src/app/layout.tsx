@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { siteConfig } from "@/lib/config";
 import "./globals.css";
 
@@ -21,10 +22,32 @@ export const metadata: Metadata = {
     template: "%s — Tumar",
   },
   description: siteConfig.description,
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.author, url: siteConfig.url }],
+  creator: siteConfig.author,
+  publisher: siteConfig.name,
+  category: "technology",
+  keywords: [
+    "Tumar",
+    "market microstructure",
+    "machine learning",
+    "HFT research",
+    "data engineering",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
     title: siteConfig.title,
     description: siteConfig.description,
-    url: "/",
     siteName: siteConfig.name,
     locale: "en_US",
     type: "website",
@@ -34,6 +57,9 @@ export const metadata: Metadata = {
     title: siteConfig.title,
     description: siteConfig.description,
   },
+  ...(siteConfig.googleSiteVerification
+    ? { verification: { google: siteConfig.googleSiteVerification } }
+    : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -43,6 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">
+        <JsonLd />
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

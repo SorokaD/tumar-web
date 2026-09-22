@@ -3,6 +3,8 @@ import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = {
   title: "Execution",
+  description:
+    "Execution experiments and market friction analysis for BTC-USDT perpetual microstructure research.",
 };
 
 export default function HftExecutionPage() {

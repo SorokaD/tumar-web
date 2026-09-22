@@ -9,6 +9,9 @@ export const siteConfig = {
   linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL ?? "",
   apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
   supersetPublicUrl: process.env.NEXT_PUBLIC_SUPERSET_PUBLIC_URL ?? "",
+  author: process.env.NEXT_PUBLIC_SITE_AUTHOR ?? "Dmitrii Soroka",
+  googleSiteVerification:
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
 } as const;
 
 export const navItems = [

@@ -3,6 +3,8 @@ import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = {
   title: "About",
+  description:
+    "The person and engineering work behind Tumar — data, machine learning and realtime systems research.",
 };
 
 export default function AboutPage() {

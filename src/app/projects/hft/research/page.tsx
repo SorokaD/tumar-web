@@ -3,6 +3,8 @@ import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = {
   title: "Research",
+  description:
+    "Research notes on order book dynamics, feature engineering and predictive tests for BTC-USDT perpetuals.",
 };
 
 export default function HftResearchPage() {
