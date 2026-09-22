@@ -68,3 +68,13 @@ Expected response:
 ```json
 {"status":"ok"}
 ```
+
+## Production (tumar-ops)
+
+The live site is deployed from the sibling `tumar-ops` repo via Traefik:
+
+```bash
+docker compose -f docker/docker-compose.web.yaml --env-file .env up -d --build
+```
+
+`NEXT_PUBLIC_*` values are baked in at image build time. After changing them, rebuild the image.
