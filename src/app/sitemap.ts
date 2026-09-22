@@ -10,7 +10,7 @@ const routes: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
     { path: "/projects/hft/research", changeFrequency: "monthly", priority: 0.5 },
     { path: "/projects/hft/architecture", changeFrequency: "monthly", priority: 0.5 },
     { path: "/projects/hft/execution", changeFrequency: "monthly", priority: 0.5 },
-    { path: "/about", changeFrequency: "monthly", priority: 0.4 },
+    { path: "/about", changeFrequency: "monthly", priority: 0.7 },
   ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
