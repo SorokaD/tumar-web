@@ -1,0 +1,147 @@
+# Деплой сайта при push в main: CI → образ в GHCR → ручное подтверждение → pull на сервере.
+# Compose сайта живёт в tumar-ops (docker/docker-compose.web.yaml) и использует образ tumar-web:latest,
+# поэтому на сервере скачанный образ перетегируется в tumar-web:latest. Сам ops-репозиторий не меняется.
+#
+# Секреты: VPS_SSH_HOST, VPS_SSH_USER, VPS_SSH_PRIVATE_KEY,
+#   VPS_DEPLOY_PATH — корень клона tumar-ops на сервере (например /opt/hft/okx-hft-ops).
+# Variables (Settings → Secrets and variables → Actions → Variables): NEXT_PUBLIC_* — вшиваются при сборке.
+# Окружение: Settings → Environments → production → Required reviewers.
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - public/**
+      - package.json
+      - package-lock.json
+      - next.config.ts
+      - postcss.config.mjs
+      - tsconfig.json
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/deploy.yml
+      - .github/workflows/ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web-main
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://tumar.tech' }}
+            NEXT_PUBLIC_GITHUB_URL=${{ vars.NEXT_PUBLIC_GITHUB_URL || 'https://github.com/SorokaD' }}
+            NEXT_PUBLIC_SITE_AUTHOR=${{ vars.NEXT_PUBLIC_SITE_AUTHOR || 'Dmitrii Soroka' }}
+            NEXT_PUBLIC_LINKEDIN_URL=${{ vars.NEXT_PUBLIC_LINKEDIN_URL }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+            NEXT_PUBLIC_SUPERSET_PUBLIC_URL=${{ vars.NEXT_PUBLIC_SUPERSET_PUBLIC_URL }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          WEB_IMAGE: ${{ needs.build.outputs.image }}:${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          envs: DEPLOY_PATH,WEB_IMAGE,GHCR_USER,GHCR_TOKEN
+          script: |
+            set -euo pipefail
+
+            if [ -z "${DEPLOY_PATH:-}" ]; then
+              echo "ERROR: secret VPS_DEPLOY_PATH is empty"
+              exit 1
+            fi
+
+            cd "${DEPLOY_PATH}"
+            echo "Deploy path: $(pwd)"
+            test -f docker/docker-compose.web.yaml || { echo "ERROR: docker/docker-compose.web.yaml not found"; exit 1; }
+            test -f .env || { echo "ERROR: .env missing in ${DEPLOY_PATH}"; exit 1; }
+
+            if docker ps >/dev/null 2>&1; then
+              DOCKER="docker"
+            else
+              DOCKER="sudo -n docker"
+            fi
+
+            # GITHUB_TOKEN живёт только во время job, долгоживущих токенов на сервере нет.
+            echo "${GHCR_TOKEN}" | $DOCKER login ghcr.io -u "${GHCR_USER}" --password-stdin
+            trap '$DOCKER logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+            for attempt in 1 2 3; do
+              if $DOCKER pull "${WEB_IMAGE}"; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                echo "ERROR: docker pull failed after 3 attempts"
+                exit 1
+              fi
+              echo "pull failed (attempt ${attempt}), retrying in 15s"
+              sleep 15
+            done
+
+            $DOCKER tag "${WEB_IMAGE}" tumar-web:latest
+
+            $DOCKER compose -f docker/docker-compose.web.yaml --env-file .env \
+              up -d --no-deps --no-build --force-recreate --wait --wait-timeout 120 tumar-web
+            $DOCKER compose -f docker/docker-compose.web.yaml --env-file .env ps tumar-web

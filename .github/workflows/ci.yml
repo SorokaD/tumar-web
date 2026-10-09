@@ -1,0 +1,69 @@
+# CI: lint, сборка Next.js, typecheck и проверка Docker-образа.
+# Запускается на PR и push в develop; для main вызывается из deploy.yml перед деплоем.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Пока код не вычищен под eslint, его ошибки не блокируют merge.
+      - name: Lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t tumar-web:ci .
+
+      - name: Smoke test (/api/health)
+        run: |
+          docker run -d --name web -p 3000:3000 tumar-web:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health; then
+              echo
+              echo "OK: site is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs web
+          exit 1
