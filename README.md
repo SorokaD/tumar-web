@@ -71,15 +71,14 @@ Expected response:
 {"status":"ok"}
 ```
 
-## Production (tumar-ops)
+## Production
 
-The live site is deployed from the sibling `tumar-ops` repo via Traefik:
+Deploy is GitHub Actions → GHCR → SSH to the ops server (see [docs/deployment_cicd.md](docs/deployment_cicd.md)).
+Compose for the site lives in **tumar-ops** (`docker/docker-compose.web.yaml`); the running image is retagged to `tumar-web:latest`.
 
-```bash
-docker compose -f docker/docker-compose.web.yaml --env-file .env up -d --build
-```
+Do not use `docker compose … --build` on prod — pull the GHCR image via the Deploy workflow (or retag manually after `docker pull`).
 
-`NEXT_PUBLIC_*` values are baked in at image build time. After changing them, rebuild the image.
+`NEXT_PUBLIC_*` values are baked in at image build time (Actions variables). After changing them, run a new deploy.
 
 Public SEO files after deploy:
 
