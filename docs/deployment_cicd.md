@@ -11,7 +11,7 @@ Workflow:
 - [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) — PR и push в `develop`; на `main` вызывается из деплоя.
 - [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — сборка и деплой.
 
-Образ в GHCR: `ghcr.io/sorokad/okx-hft-tumar-web:<sha>` (имя = GitHub repository).
+Образ в GHCR: `ghcr.io/sorokad/tumar-web:<sha>` (имя = GitHub repository `tumar-web`).
 На сервере образ перетегируется в `tumar-web:latest` — так ожидает compose в tumar-ops.
 Compose сайта живёт в **tumar-ops** (`docker/docker-compose.web.yaml`); этот репозиторий на сервере не клонируется для деплоя сайта.
 
