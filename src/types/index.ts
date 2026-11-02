@@ -111,6 +111,29 @@ export interface ExecutionMetrics {
   adverseSelection: LiveMetric;
 }
 
+export interface LiveRecentTrade {
+  id: string;
+  strategy: string;
+  instrument: string;
+  side: string;
+  netPnl: number;
+  exitReason: string | null;
+  exitAt: string;
+  holdingSeconds: number | null;
+}
+
+export interface LiveRecentOrder {
+  id: string;
+  strategy: string | null;
+  instrument: string;
+  side: string;
+  status: string;
+  orderType: string | null;
+  price: number | null;
+  size: number | null;
+  createdAt: string;
+}
+
 export interface LiveHftDashboard {
   status: LiveSystemStatus;
   statusCards: readonly LiveStatusCard[];
@@ -118,4 +141,8 @@ export interface LiveHftDashboard {
   charts: readonly LiveChartSpec[];
   research: ResearchMetrics;
   execution: ExecutionMetrics;
+  recentTrades?: readonly LiveRecentTrade[];
+  recentOrders?: readonly LiveRecentOrder[];
+  /** database = live Timescale feed; mock = local fallback */
+  dataSource?: "database" | "mock";
 }

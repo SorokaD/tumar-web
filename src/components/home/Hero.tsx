@@ -4,8 +4,8 @@ import { Container } from "@/components/ui/Container";
 import { getLiveResearchSnapshot } from "@/lib/api/hft";
 import { siteConfig } from "@/lib/config";
 
-export function Hero() {
-  const snapshot = getLiveResearchSnapshot();
+export async function Hero() {
+  const snapshot = await getLiveResearchSnapshot();
 
   return (
     <section className="pt-16 pb-8 md:pt-20 md:pb-10">

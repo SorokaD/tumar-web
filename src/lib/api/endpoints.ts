@@ -9,4 +9,5 @@ export const apiEndpoints = {
   publicHftModels: "/api/public/hft/models",
   publicHftMetrics: "/api/public/hft/metrics",
   publicHftExecution: "/api/public/hft/execution",
+  publicHftLive: "/api/public/hft/live",
 } as const;
