@@ -29,6 +29,28 @@ Compose сайта живёт в **tumar-ops** (`docker/docker-compose.web.yaml`
 | `VPS_DEPLOY_PATH` | secret | `/opt/hft/okx-hft-ops` |
 | `NEXT_PUBLIC_*` | variables | публичные URL/ключи для Next.js |
 
+На **ops** в `.env` (runtime контейнера `tumar-web`, не в GitHub Actions build):
+
+| Имя | Назначение |
+|-----|------------|
+| `HFT_DATABASE_URL` | read-only URL в Timescale/PgBouncer для Live journal (`okx_exec`) |
+| `HFT_PUBLIC_STRATEGY` | фильтр стратегии (default `random_baseline_v1`) |
+| `HFT_PUBLIC_INST_ID` | фильтр инструмента (default `BTC-USDT-SWAP`) |
+
+Без `HFT_DATABASE_URL` страница `/projects/hft/live` показывает локальные mock-данные.
+
+Пример роли (выполнить на сервере БД от суперпользователя, пароль не коммитить):
+
+```sql
+CREATE ROLE tumar_web_ro LOGIN PASSWORD '...';
+GRANT CONNECT ON DATABASE okx_hft TO tumar_web_ro;
+GRANT USAGE ON SCHEMA okx_exec TO tumar_web_ro;
+GRANT SELECT ON ALL TABLES IN SCHEMA okx_exec TO tumar_web_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA okx_exec GRANT SELECT ON TABLES TO tumar_web_ro;
+```
+
+Публичный JSON: `GET /api/public/hft/live`.
+
 Environment `production`: Required reviewers, без admin bypass; Deployment branches → `main`.
 
 ---

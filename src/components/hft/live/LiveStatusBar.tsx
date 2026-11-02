@@ -20,8 +20,8 @@ export function LiveStatusBar({ status }: LiveStatusBarProps) {
         ) : null}
       </div>
       <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-        Realtime monitoring of market data, model predictions and execution
-        experiments.
+        Live demo executor: random baseline control strategy, order lifecycle and
+        fee-aware PnL from the research journal.
       </p>
       <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div>

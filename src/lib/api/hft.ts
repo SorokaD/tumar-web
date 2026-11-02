@@ -1,21 +1,27 @@
-import { hftLiveSnapshot, hftSubsystemStatuses } from "@/lib/mock/hft-live";
-import { liveHftDashboard } from "@/lib/mock/live-hft";
+import {
+  buildLiveHftDashboard,
+  buildLiveResearchSnapshot,
+} from "@/lib/hft/build-live-dashboard";
+import { hftSubsystemStatuses } from "@/lib/mock/hft-live";
 import type {
   LiveHftDashboard,
   LiveResearchSnapshot,
   ProjectSubsystemStatus,
 } from "@/types";
 
-// Swap these getters for apiGet(...) when the realtime API is ready.
-
-export function getLiveResearchSnapshot(): LiveResearchSnapshot {
-  return hftLiveSnapshot;
+export async function getLiveResearchSnapshot(): Promise<LiveResearchSnapshot> {
+  return buildLiveResearchSnapshot();
 }
 
 export function getHftSubsystemStatuses(): readonly ProjectSubsystemStatus[] {
   return hftSubsystemStatuses;
 }
 
-export function getLiveHftDashboard(): LiveHftDashboard {
-  return liveHftDashboard;
+export async function getLiveHftDashboard(): Promise<LiveHftDashboard> {
+  const { dashboard } = await buildLiveHftDashboard();
+  return dashboard;
+}
+
+export async function getLiveHftDashboardDetailed() {
+  return buildLiveHftDashboard();
 }
